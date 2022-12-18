@@ -1,3 +1,4 @@
+import org.apache.spark.sql.functions.{col, map_keys, map_values}
 import org.apache.spark.sql.types.{DataTypes, DoubleType, LongType, StringType, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
 
@@ -22,7 +23,7 @@ object SqlToJson {
 //    )
 
     var structureData = Seq(
-      Row(545863491123L, Map("intent,system_name" -> 20.42)),
+      Row(545863491123L, Map("intent,system_name" -> 20.42, "intent2,system_name2" -> 20.32)),
       Row(545863491124L, Map("intent,system_name" -> 20.42)),
       Row(545863491125L, Map("intent,system_name" -> 20.42)),
       Row(545863491126L, Map("intent,system_name" -> 20.42)),
@@ -38,6 +39,10 @@ object SqlToJson {
       spark.sparkContext.parallelize(structureData),arrayStructureSchema)
     mapTypeDF.printSchema()
     mapTypeDF.show()
+
+    val df = mapTypeDF.select(col("calibrated_score_array")).show()
+
+    val dfValues = mapTypeDF.select(map_keys(col("calibrated_score_array"))).show()
 
 //    //From Data (USING createDataFrame)
 //    val dfFromData2 = spark.createDataFrame(data).toDF(columns:_*)
