@@ -1,4 +1,4 @@
-import org.apache.spark.sql.functions.{col, explode, first, monotonically_increasing_id, when}
+import org.apache.spark.sql.functions.{col, explode, first, monotonically_increasing_id, spark_partition_id, when}
 import org.apache.spark.sql.types.{DataTypes, DoubleType, LongType, StringType, StructType}
 import org.apache.spark.sql.{Row, SparkSession}
 
@@ -40,6 +40,8 @@ object SqlToJson {
     mapTypeDF.printSchema()
     mapTypeDF.show()
 
+    mapTypeDF.createOrReplaceTempView("test_table")
+
     val explodeDF = mapTypeDF.select($"epk_id", explode($"calibrated_score_array"))
       .withColumn("system_name", when(col("key") === "A07.01591.SberSpasibo_turn_off", "SberSpasibo_turn_off")
         when(col("key") === "A23.01639.Exchange_of_coins_for_banknotes", "Exchange_of_coins_for_banknotes")
@@ -54,6 +56,12 @@ object SqlToJson {
 //      .agg(first("value")).show()
     explodeDF.printSchema()
     explodeDF.show()
+
+    val sqlQuery: String = "SELECT epk_id, explode(calibrated_score_array) AS (intent, score), CASE WHEN intent = 'A23.01639.Exchange_of_coins_for_banknotes' THEN 'Exchange_of_coins_for_banknotes' ELSE '' END AS system_name FROM test_table"
+    spark.sql(sqlQuery).show()
+
+    val sqlQueryCheck: String = "SELECT array(named_struct('intent', 3, 'score', 24, 'system_name', 20.33), named_struct('intent', 3, 'score', 24, 'system_name', 20.33), named_struct('intent', 3, 'score', 24, 'system_name', 20.33)) as product_intents, epk_id from test_table"
+    spark.sql(sqlQueryCheck).write.json("src/main/recources/result.json")
 
 
 
