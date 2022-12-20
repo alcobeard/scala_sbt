@@ -60,8 +60,8 @@ object SqlToJson {
     val sqlQuery: String = "SELECT epk_id, explode(calibrated_score_array) AS (intent, score), CASE WHEN intent = 'A23.01639.Exchange_of_coins_for_banknotes' THEN 'Exchange_of_coins_for_banknotes' ELSE '' END AS system_name FROM test_table"
     spark.sql(sqlQuery).show()
 
-    val sqlQueryCheck: String = "SELECT array(named_struct('intent', 3, 'score', 24, 'system_name', 20.33), named_struct('intent', 3, 'score', 24, 'system_name', 20.33), named_struct('intent', 3, 'score', 24, 'system_name', 20.33)) as product_intents, epk_id from test_table"
-    spark.sql(sqlQueryCheck).write.json("src/main/recources/result.json")
+    val sqlQueryCheck: String = "SELECT a.epk_id, array(named_struct('intent', a.intent, 'score', a.score, 'system_name', a.system_name)) as product_intents from (SELECT epk_id, explode(calibrated_score_array) AS (intent, score), CASE WHEN intent = 'A23.01639.Exchange_of_coins_for_banknotes' THEN 'Exchange_of_coins_for_banknotes' ELSE '' END AS system_name FROM test_table) as a"
+    spark.sql(sqlQueryCheck).write.json("src/main/recources/result")
 
 
 
