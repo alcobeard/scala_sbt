@@ -92,6 +92,7 @@ object SqlToJson {
           """).show()
 
     spark.sql("""
+          WITH product_intents AS (
           SELECT a.epk_id, collect_list(named_struct('intent', a.intent, 'score', a.score, 'system_name', a.system_name)) as product_intents
           from (SELECT epk_id, explode(calibrated_score_array) AS (intent, score),
                 CASE
@@ -330,7 +331,9 @@ object SqlToJson {
                     WHEN intent = 'whats_new' THEN 'whats_new'
                     WHEN intent IN ('cinema_tickets', 'geo_nearest_sber') THEN 'where_to_go_app'
                     ELSE '' END AS system_name FROM test_table) as a
-        group by epk_id
+        group by epk_id)
+        select 12000 as message_id, pi.epk_id as key,
+        named_struct('product_intents', pi.product_intents, 'epk_id', epk_id) as data from product_intents pi
           """).write.json("src/main/recources/result")
 
 //    spark.sql(
